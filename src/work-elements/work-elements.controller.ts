@@ -11,6 +11,7 @@ import {
   Req,
   HttpException,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { WorkElementsService } from './work-elements.service';
@@ -28,10 +29,11 @@ import { CreateUserProjectDto } from './dto/create-user-project.dto';
 import { UpdateUserProjectDto } from './dto/update-user-project.dto';
 import { CreateUserTaskDto } from './dto/create-user-task.dto';
 import { UpdateUserTaskDto } from './dto/update-user-task.dto';
-
-const DEFAULT_USER_ID = 'default-user';
+import { JwtAuthGuard } from '../users/jwt.guard';
+import { CurrentUser } from '../users/decorators/current-user.decorator';
 
 @Controller('work-elements')
+@UseGuards(JwtAuthGuard)
 export class WorkElementsController {
   constructor(private readonly workElementsService: WorkElementsService) {}
 
@@ -61,12 +63,15 @@ export class WorkElementsController {
 
   @Post('projects')
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-  async createProject(@Body() createProjectDto: CreateProjectDto) {
+  async createProject(
+    @Body() createProjectDto: CreateProjectDto,
+    @CurrentUser() user: { userId: string; email: string },
+  ) {
     try {
       console.log('Creating project with:', createProjectDto);
       const result = await this.workElementsService.createProject(
         createProjectDto,
-        DEFAULT_USER_ID,
+        user.userId,
       );
       console.log('Project created:', result);
       return result;
@@ -86,6 +91,7 @@ export class WorkElementsController {
   async updateProject(
     @Param('id') id: string,
     @Body() updateProjectDto: UpdateProjectDto,
+    @CurrentUser() user: { userId: string; email: string },
   ) {
     try {
       console.log('Updating project:', id);
@@ -93,7 +99,7 @@ export class WorkElementsController {
       return await this.workElementsService.updateProject(
         id,
         updateProjectDto,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error: any) {
       console.error('Update project error:', error);
@@ -117,9 +123,12 @@ export class WorkElementsController {
   }
 
   @Delete('projects/:id')
-  async deleteProject(@Param('id') id: string) {
+  async deleteProject(
+    @Param('id') id: string,
+    @CurrentUser() user: { userId: string; email: string },
+  ) {
     try {
-      return await this.workElementsService.deleteProject(id, DEFAULT_USER_ID);
+      return await this.workElementsService.deleteProject(id, user.userId);
     } catch (error: any) {
       console.error('Delete project error:', error);
       console.error('Error message:', error.message);
@@ -166,14 +175,17 @@ export class WorkElementsController {
 
   @Post('tasks')
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-  async createTask(@Body() createTaskDto: CreateTaskDto) {
+  async createTask(
+    @Body() createTaskDto: CreateTaskDto,
+    @CurrentUser() user: { userId: string; email: string },
+  ) {
     try {
       console.log('Creating task with DTO:', createTaskDto);
-      console.log('User ID:', DEFAULT_USER_ID);
+      console.log('User ID:', user.userId);
 
       const result = await this.workElementsService.createTask(
         createTaskDto,
-        DEFAULT_USER_ID,
+        user.userId,
       );
 
       console.log('Task created successfully:', result);
@@ -194,12 +206,13 @@ export class WorkElementsController {
   async updateTask(
     @Param('id') id: string,
     @Body() updateTaskDto: UpdateTaskDto,
+    @CurrentUser() user: { userId: string; email: string },
   ) {
     try {
       return await this.workElementsService.updateTask(
         id,
         updateTaskDto,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error) {
       throw new HttpException(
@@ -210,9 +223,12 @@ export class WorkElementsController {
   }
 
   @Delete('tasks/:id')
-  async deleteTask(@Param('id') id: string) {
+  async deleteTask(
+    @Param('id') id: string,
+    @CurrentUser() user: { userId: string; email: string },
+  ) {
     try {
-      return await this.workElementsService.deleteTask(id, DEFAULT_USER_ID);
+      return await this.workElementsService.deleteTask(id, user.userId);
     } catch (error) {
       throw new HttpException(
         'Failed to delete task',
@@ -247,11 +263,14 @@ export class WorkElementsController {
 
   @Post('milestones')
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-  async createMilestone(@Body() createMilestoneDto: CreateMilestoneDto) {
+  async createMilestone(
+    @Body() createMilestoneDto: CreateMilestoneDto,
+    @CurrentUser() user: { userId: string; email: string },
+  ) {
     try {
       return await this.workElementsService.createMilestone(
         createMilestoneDto,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error) {
       throw new HttpException(
@@ -266,12 +285,13 @@ export class WorkElementsController {
   async updateMilestone(
     @Param('id') id: string,
     @Body() updateMilestoneDto: UpdateMilestoneDto,
+    @CurrentUser() user: { userId: string; email: string },
   ) {
     try {
       return await this.workElementsService.updateMilestone(
         id,
         updateMilestoneDto,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error) {
       throw new HttpException(
@@ -282,11 +302,14 @@ export class WorkElementsController {
   }
 
   @Delete('milestones/:id')
-  async deleteMilestone(@Param('id') id: string) {
+  async deleteMilestone(
+    @Param('id') id: string,
+    @CurrentUser() user: { userId: string; email: string },
+  ) {
     try {
       return await this.workElementsService.deleteMilestone(
         id,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error) {
       throw new HttpException(
@@ -322,11 +345,14 @@ export class WorkElementsController {
 
   @Post('incidents')
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-  async createIncidence(@Body() createIncidenceDto: CreateIncidenceDto) {
+  async createIncidence(
+    @Body() createIncidenceDto: CreateIncidenceDto,
+    @CurrentUser() user: { userId: string; email: string },
+  ) {
     try {
       return await this.workElementsService.createIncidence(
         createIncidenceDto,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error) {
       throw new HttpException(
@@ -341,12 +367,13 @@ export class WorkElementsController {
   async updateIncidence(
     @Param('id') id: string,
     @Body() updateIncidenceDto: UpdateIncidenceDto,
+    @CurrentUser() user: { userId: string; email: string },
   ) {
     try {
       return await this.workElementsService.updateIncidence(
         id,
         updateIncidenceDto,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error) {
       throw new HttpException(
@@ -357,11 +384,14 @@ export class WorkElementsController {
   }
 
   @Delete('incidents/:id')
-  async deleteIncidence(@Param('id') id: string) {
+  async deleteIncidence(
+    @Param('id') id: string,
+    @CurrentUser() user: { userId: string; email: string },
+  ) {
     try {
       return await this.workElementsService.deleteIncidence(
         id,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error) {
       throw new HttpException(
@@ -397,11 +427,14 @@ export class WorkElementsController {
 
   @Post('comments')
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-  async createComment(@Body() createCommentDto: CreateCommentDto) {
+  async createComment(
+    @Body() createCommentDto: CreateCommentDto,
+    @CurrentUser() user: { userId: string; email: string },
+  ) {
     try {
       return await this.workElementsService.createComment(
         createCommentDto,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error) {
       throw new HttpException(
@@ -416,12 +449,13 @@ export class WorkElementsController {
   async updateComment(
     @Param('id') id: string,
     @Body() updateCommentDto: UpdateCommentDto,
+    @CurrentUser() user: { userId: string; email: string },
   ) {
     try {
       return await this.workElementsService.updateComment(
         id,
         updateCommentDto,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error) {
       throw new HttpException(
@@ -432,9 +466,12 @@ export class WorkElementsController {
   }
 
   @Delete('comments/:id')
-  async deleteComment(@Param('id') id: string) {
+  async deleteComment(
+    @Param('id') id: string,
+    @CurrentUser() user: { userId: string; email: string },
+  ) {
     try {
-      return await this.workElementsService.deleteComment(id, DEFAULT_USER_ID);
+      return await this.workElementsService.deleteComment(id, user.userId);
     } catch (error) {
       throw new HttpException(
         'Failed to delete comment',
@@ -460,12 +497,13 @@ export class WorkElementsController {
   async assignUserToProject(
     @Param('projectId') projectId: string,
     @Body() createUserProjectDto: CreateUserProjectDto,
+    @CurrentUser() user: { userId: string; email: string },
   ) {
     try {
       return await this.workElementsService.assignUserToProject(
         projectId,
         createUserProjectDto,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error) {
       throw new HttpException(
@@ -481,13 +519,14 @@ export class WorkElementsController {
     @Param('projectId') projectId: string,
     @Param('userId') userId: string,
     @Body() updateUserProjectDto: UpdateUserProjectDto,
+    @CurrentUser() user: { userId: string; email: string },
   ) {
     try {
       return await this.workElementsService.updateUserProjectRole(
         projectId,
         userId,
         updateUserProjectDto,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error) {
       throw new HttpException(
@@ -501,12 +540,13 @@ export class WorkElementsController {
   async removeUserFromProject(
     @Param('projectId') projectId: string,
     @Param('userId') userId: string,
+    @CurrentUser() user: { userId: string; email: string },
   ) {
     try {
       return await this.workElementsService.removeUserFromProject(
         projectId,
         userId,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error) {
       throw new HttpException(
@@ -533,12 +573,13 @@ export class WorkElementsController {
   async assignUserToTask(
     @Param('taskId') taskId: string,
     @Body() createUserTaskDto: CreateUserTaskDto,
+    @CurrentUser() user: { userId: string; email: string },
   ) {
     try {
       return await this.workElementsService.assignUserToTask(
         taskId,
         createUserTaskDto,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error) {
       throw new HttpException(
@@ -554,13 +595,14 @@ export class WorkElementsController {
     @Param('taskId') taskId: string,
     @Param('userId') userId: string,
     @Body() updateUserTaskDto: UpdateUserTaskDto,
+    @CurrentUser() user: { userId: string; email: string },
   ) {
     try {
       return await this.workElementsService.updateUserTaskRole(
         taskId,
         userId,
         updateUserTaskDto,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error) {
       throw new HttpException(
@@ -574,12 +616,13 @@ export class WorkElementsController {
   async removeUserFromTask(
     @Param('taskId') taskId: string,
     @Param('userId') userId: string,
+    @CurrentUser() user: { userId: string; email: string },
   ) {
     try {
       return await this.workElementsService.removeUserFromTask(
         taskId,
         userId,
-        DEFAULT_USER_ID,
+        user.userId,
       );
     } catch (error) {
       throw new HttpException(

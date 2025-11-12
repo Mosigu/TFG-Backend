@@ -49,6 +49,19 @@ export class WorkElementsService {
       data: createProjectDto,
     } as any);
 
+    try {
+      await this.activityService.logProjectCreated(
+        userId,
+        project.id,
+        project.title,
+      );
+    } catch (activityError) {
+      console.error(
+        'Failed to log activity, but project was created:',
+        activityError,
+      );
+    }
+
     return project;
   }
 
@@ -226,6 +239,20 @@ export class WorkElementsService {
         comments: { include: { author: true } },
       },
     });
+
+    try {
+      await this.activityService.logTaskCreated(
+        userId,
+        task.id,
+        task.title,
+        task.projectId,
+      );
+    } catch (activityError) {
+      console.error(
+        'Failed to log activity, but task was created:',
+        activityError,
+      );
+    }
 
     return task;
   }
