@@ -6,12 +6,17 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  Query,
 } from '@nestjs/common';
 import { ActivityService } from './activity.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
+import { JwtAuthGuard } from '../users/jwt.guard';
+import { CurrentUser } from '../users/decorators/current-user.decorator';
 
 @Controller('activity')
+@UseGuards(JwtAuthGuard)
 export class ActivityController {
   constructor(private readonly activityService: ActivityService) {}
 
@@ -22,17 +27,16 @@ export class ActivityController {
 
   @Get()
   findAll(
-    @Body()
-    filters: {
-      userId?: string;
-      entityType?: string;
-      entityId?: string;
-      limit?: number;
-    },
+    @Query('userId') userId?: string,
+    @Query('entityType') entityType?: string,
+    @Query('entityId') entityId?: string,
+    @Query('limit') limit?: string,
   ) {
     return this.activityService.getAllActivities({
-      ...filters,
-      limit: filters.limit || 50,
+      userId,
+      entityType,
+      entityId,
+      limit: limit ? parseInt(limit) : 50,
     });
   }
 
