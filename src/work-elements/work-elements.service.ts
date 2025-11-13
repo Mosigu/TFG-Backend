@@ -333,14 +333,32 @@ export class WorkElementsService {
       include: { task: true },
     } as any);
 
-    const task = await this.getTaskById(milestone.taskId);
-    await this.activityService.logMilestoneCompleted(
-      userId,
-      milestone.id,
-      milestone.title,
-      task.id,
-      task.title,
-    );
+    try {
+      const task = await this.getTaskById(milestone.taskId);
+      await this.activityService.logMilestoneCreated(
+        userId,
+        milestone.id,
+        milestone.title,
+        task.id,
+        task.title,
+      );
+
+      // Also log if milestone is already completed
+      if (milestone.isCompleted) {
+        await this.activityService.logMilestoneCompleted(
+          userId,
+          milestone.id,
+          milestone.title,
+          task.id,
+          task.title,
+        );
+      }
+    } catch (activityError) {
+      console.error(
+        'Failed to log activity, but milestone was created:',
+        activityError,
+      );
+    }
 
     return milestone;
   }
@@ -350,21 +368,44 @@ export class WorkElementsService {
     updateMilestoneDto: UpdateMilestoneDto,
     userId: string,
   ): Promise<Milestone> {
-    await this.getMilestoneById(id);
+    const oldMilestone = await this.getMilestoneById(id);
     const milestone = await this.prisma.milestone.update({
       where: { id },
       data: updateMilestoneDto,
       include: { task: true },
     } as any);
 
-    if (updateMilestoneDto.isCompleted) {
+    try {
       const task = await this.getTaskById(milestone.taskId);
-      await this.activityService.logMilestoneCompleted(
+
+      // Log update
+      await this.activityService.logMilestoneUpdated(
         userId,
         milestone.id,
         milestone.title,
         task.id,
         task.title,
+        JSON.stringify(updateMilestoneDto),
+      );
+
+      // Also log if milestone was just completed
+      if (
+        updateMilestoneDto.isCompleted &&
+        !oldMilestone.isCompleted &&
+        milestone.isCompleted
+      ) {
+        await this.activityService.logMilestoneCompleted(
+          userId,
+          milestone.id,
+          milestone.title,
+          task.id,
+          task.title,
+        );
+      }
+    } catch (activityError) {
+      console.error(
+        'Failed to log activity, but milestone was updated:',
+        activityError,
       );
     }
 
@@ -372,8 +413,26 @@ export class WorkElementsService {
   }
 
   async deleteMilestone(id: string, userId: string): Promise<Milestone> {
-    await this.getMilestoneById(id);
-    return this.prisma.milestone.delete({ where: { id } } as any);
+    const milestone = await this.getMilestoneById(id);
+    const deleted = await this.prisma.milestone.delete({ where: { id } } as any);
+
+    try {
+      const task = await this.getTaskById(milestone.taskId);
+      await this.activityService.logMilestoneDeleted(
+        userId,
+        deleted.id,
+        deleted.title,
+        task.id,
+        task.title,
+      );
+    } catch (activityError) {
+      console.error(
+        'Failed to log activity, but milestone was deleted:',
+        activityError,
+      );
+    }
+
+    return deleted;
   }
 
   async getAllIncidences(): Promise<Incidence[]> {
@@ -419,14 +478,33 @@ export class WorkElementsService {
       data: updateIncidenceDto as any,
     } as any);
 
-    if (incidence.status === 'resolved' && oldIncidence.status !== 'resolved') {
+    try {
       const task = await this.getTaskById((incidence as any).taskId);
-      await this.activityService.logIncidenceResolved(
+
+      // Log general update
+      await this.activityService.logIncidenceUpdated(
         userId,
         incidence.id,
         incidence.title,
         task.id,
         task.title,
+        JSON.stringify(updateIncidenceDto),
+      );
+
+      // Also log if incidence was just resolved
+      if (incidence.status === 'resolved' && oldIncidence.status !== 'resolved') {
+        await this.activityService.logIncidenceResolved(
+          userId,
+          incidence.id,
+          incidence.title,
+          task.id,
+          task.title,
+        );
+      }
+    } catch (activityError) {
+      console.error(
+        'Failed to log activity, but incidence was updated:',
+        activityError,
       );
     }
 
@@ -434,8 +512,26 @@ export class WorkElementsService {
   }
 
   async deleteIncidence(id: string, userId: string): Promise<Incidence> {
-    await this.getIncidenceById(id);
-    return this.prisma.incidence.delete({ where: { id } } as any);
+    const incidence = await this.getIncidenceById(id);
+    const deleted = await this.prisma.incidence.delete({ where: { id } } as any);
+
+    try {
+      const task = await this.getTaskById((incidence as any).taskId);
+      await this.activityService.logIncidenceDeleted(
+        userId,
+        deleted.id,
+        deleted.title,
+        task.id,
+        task.title,
+      );
+    } catch (activityError) {
+      console.error(
+        'Failed to log activity, but incidence was deleted:',
+        activityError,
+      );
+    }
+
+    return deleted;
   }
 
   async getAllComments(): Promise<Comment[]> {
