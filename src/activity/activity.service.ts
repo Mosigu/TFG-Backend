@@ -269,6 +269,61 @@ export class ActivityService {
     });
   }
 
+  async logMilestoneCreated(
+    userId: string,
+    milestoneId: string,
+    milestoneName: string,
+    taskId: string,
+    taskTitle: string,
+  ) {
+    return this.createActivity({
+      agentId: userId,
+      entityType: 'milestone',
+      entityId: milestoneId,
+      action: 'CREATED',
+      description: `Created milestone "${milestoneName}" in task "${taskTitle}"`,
+      relatedEntityId: taskId,
+      relatedEntityType: 'task',
+    });
+  }
+
+  async logMilestoneUpdated(
+    userId: string,
+    milestoneId: string,
+    milestoneName: string,
+    taskId: string,
+    taskTitle: string,
+    changes: string,
+  ) {
+    return this.createActivity({
+      agentId: userId,
+      entityType: 'milestone',
+      entityId: milestoneId,
+      action: 'UPDATED',
+      description: `Updated milestone "${milestoneName}" in task "${taskTitle}": ${changes}`,
+      relatedEntityId: taskId,
+      relatedEntityType: 'task',
+    });
+  }
+
+  async logMilestoneDeleted(
+    userId: string,
+    milestoneId: string,
+    milestoneName: string,
+    taskId: string,
+    taskTitle: string,
+  ) {
+    return this.createActivity({
+      agentId: userId,
+      entityType: 'milestone',
+      entityId: milestoneId,
+      action: 'DELETED',
+      description: `Deleted milestone "${milestoneName}" from task "${taskTitle}"`,
+      relatedEntityId: taskId,
+      relatedEntityType: 'task',
+    });
+  }
+
   async logMilestoneCompleted(
     userId: string,
     milestoneId: string,
@@ -300,6 +355,43 @@ export class ActivityService {
       entityId: incidenceId,
       action: 'CREATED',
       description: `Reported incidence "${incidenceTitle}" in task "${taskTitle}"`,
+      relatedEntityId: taskId,
+      relatedEntityType: 'task',
+    });
+  }
+
+  async logIncidenceUpdated(
+    userId: string,
+    incidenceId: string,
+    incidenceTitle: string,
+    taskId: string,
+    taskTitle: string,
+    changes: string,
+  ) {
+    return this.createActivity({
+      agentId: userId,
+      entityType: 'incidence',
+      entityId: incidenceId,
+      action: 'UPDATED',
+      description: `Updated incidence "${incidenceTitle}" in task "${taskTitle}": ${changes}`,
+      relatedEntityId: taskId,
+      relatedEntityType: 'task',
+    });
+  }
+
+  async logIncidenceDeleted(
+    userId: string,
+    incidenceId: string,
+    incidenceTitle: string,
+    taskId: string,
+    taskTitle: string,
+  ) {
+    return this.createActivity({
+      agentId: userId,
+      entityType: 'incidence',
+      entityId: incidenceId,
+      action: 'DELETED',
+      description: `Deleted incidence "${incidenceTitle}" from task "${taskTitle}"`,
       relatedEntityId: taskId,
       relatedEntityType: 'task',
     });
